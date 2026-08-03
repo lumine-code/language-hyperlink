@@ -1,0 +1,43 @@
+{
+  "name": "language-hyperlink",
+  "author": "lumine-code",
+  "version": "1.0.0",
+  "main": "lib/main",
+  "description": "Hyperlink colorization.",
+  "keywords": [
+    "url",
+    "uri",
+    "http",
+    "tree-sitter"
+  ],
+  "engines": {
+    "atom": "*",
+    "node": ">=14"
+  },
+  "repository": "https://github.com/lumine-code/language-hyperlink",
+  "license": "MIT",
+  "providedServices": {
+    "hyperlink.injection": {
+      "versions": {
+        "1.0.0": "provideHyperlinkInjection"
+      }
+    }
+  },
+  "bugs": {
+    "url": "https://github.com/lumine-code/language-hyperlink/issues"
+  },
+  "scripts": {
+    "test": "lumine --test spec",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-n": "^18.2.2",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.6"
+  }
+}
