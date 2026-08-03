@@ -1,7 +1,7 @@
 {
   // name: 'Hyperlink'
   "scopeName": "text.hyperlink",
-  "type": "modern-tree-sitter",
+  "type": "tree-sitter",
   "parser": "tree-sitter-hyperlink",
   "injectionRegex": "hyperlink",
   "treeSitter": {

@@ -5,7 +5,7 @@ describe("Hyperlink grammar", function () {
 
   beforeEach(function () {
     // TODO: All these specs rely on the ability of a grammar to tokenize a
-    // line in isolation, which is something that a `WASMTreeSitterGrammar`
+    // line in isolation, which is something that a `TreeSitterGrammar`
     // cannot do. This package will need specialized tests for the modern
     // Tree-sitter world the same way that most other language packages do.
     atom.config.set("language.useTreeSitterParsers", false);
