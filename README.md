@@ -4,7 +4,7 @@ Hyperlink colorization.
 
 ## Features
 
-- **Grammars**: provides Tree-sitter grammars built from [tree-sitter-hyperlink](https://github.com/savetheclocktower/tree-sitter-hyperlink) and TextMate grammars maintained here.
+- **Grammars**: provides Tree-sitter grammars built from [tree-sitter-hyperlink](https://github.com/lumine-code/tree-sitter-hyperlink) and TextMate grammars maintained here.
 - **Syntax highlighting**: highlights hyperlinks embedded in strings, comments, and plain text.
 
 ## Installation
