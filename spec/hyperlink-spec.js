@@ -4,10 +4,10 @@ describe("Hyperlink grammar", function () {
   let grammar = null;
 
   beforeEach(function () {
-    // TODO: All these specs rely on the ability of a grammar to tokenize a
-    // line in isolation, which is something that a `TreeSitterGrammar`
-    // cannot do. This package will need specialized tests for the modern
-    // Tree-sitter world the same way that most other language packages do.
+    // These specs all tokenize a line in isolation, which only a TextMate
+    // grammar can do, so this file covers `grammars/hyperlink.json` alone.
+    // The Tree-sitter grammar is covered by `tree-sitter-grammar-spec.js`,
+    // which asserts scope ranges in a real buffer instead.
     atom.config.set("language.useTreeSitterParsers", false);
     waitsForPromise(() => atom.packages.activatePackage("language-hyperlink"));
 
@@ -158,6 +158,63 @@ describe("Hyperlink grammar", function () {
       expect(tokens[1]).toEqual({
         value: "https://en.wikipedia.org/wiki/Atom_(text_editor)",
         scopes: ["text.plain.null-grammar", "markup.underline.link.https.hyperlink"],
+      });
+    });
+  });
+
+  describe("parsing trailing punctuation", function () {
+    // `_` and `~` are in the character class, so without the trailing guard a
+    // markdown emphasis or strikethrough closer is swallowed by the link. They
+    // stay legal in the middle of a URL — only the last character is refused.
+    it("does not include a trailing underscore", function () {
+      const plainGrammar = atom.grammars.selectGrammar();
+      const { tokens } = plainGrammar.tokenizeLine("http://example.com/foo_");
+      expect(tokens[0]).toEqual({
+        value: "http://example.com/foo",
+        scopes: ["text.plain.null-grammar", "markup.underline.link.http.hyperlink"],
+      });
+    });
+
+    it("still includes an underscore in the middle", function () {
+      const plainGrammar = atom.grammars.selectGrammar();
+      const { tokens } = plainGrammar.tokenizeLine("http://example.com/a_b/c");
+      expect(tokens[0]).toEqual({
+        value: "http://example.com/a_b/c",
+        scopes: ["text.plain.null-grammar", "markup.underline.link.http.hyperlink"],
+      });
+    });
+
+    it("does not include trailing tildes", function () {
+      const plainGrammar = atom.grammars.selectGrammar();
+      const { tokens } = plainGrammar.tokenizeLine("~~http://example.com~~");
+      expect(tokens[1]).toEqual({
+        value: "http://example.com",
+        scopes: ["text.plain.null-grammar", "markup.underline.link.http.hyperlink"],
+      });
+    });
+
+    it("does not include a trailing exclamation mark or pipe", function () {
+      const plainGrammar = atom.grammars.selectGrammar();
+
+      let { tokens } = plainGrammar.tokenizeLine("http://example.com!");
+      expect(tokens[0]).toEqual({
+        value: "http://example.com",
+        scopes: ["text.plain.null-grammar", "markup.underline.link.http.hyperlink"],
+      });
+
+      ({ tokens } = plainGrammar.tokenizeLine("http://example.com|"));
+      expect(tokens[0]).toEqual({
+        value: "http://example.com",
+        scopes: ["text.plain.null-grammar", "markup.underline.link.http.hyperlink"],
+      });
+    });
+
+    it("applies the same guard to mailto: links", function () {
+      const plainGrammar = atom.grammars.selectGrammar();
+      const { tokens } = plainGrammar.tokenizeLine("mailto:noreply@example.com_");
+      expect(tokens[0]).toEqual({
+        value: "mailto:noreply@example.com",
+        scopes: ["text.plain.null-grammar", "markup.underline.link.mailto.hyperlink"],
       });
     });
   });
