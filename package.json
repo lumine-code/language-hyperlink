@@ -11,7 +11,7 @@
     "tree-sitter"
   ],
   "engines": {
-    "lumine": "*",
+    "lumine": "^1.0.0",
     "node": ">=14"
   },
   "repository": "https://github.com/lumine-code/language-hyperlink",
