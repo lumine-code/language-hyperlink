@@ -3,6 +3,12 @@
   "author": "lumine-code",
   "version": "1.0.0",
   "main": "lib/main",
+  "files": [
+    "docs",
+    "grammars",
+    "lib",
+    "spec"
+  ],
   "description": "Hyperlink colorization.",
   "keywords": [
     "url",
