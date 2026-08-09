@@ -8,10 +8,10 @@ describe("Hyperlink grammar", function () {
     // grammar can do, so this file covers `grammars/hyperlink.json` alone.
     // The Tree-sitter grammar is covered by `tree-sitter-grammar-spec.js`,
     // which asserts scope ranges in a real buffer instead.
-    atom.config.set("language.useTreeSitterParsers", false);
-    waitsForPromise(() => atom.packages.activatePackage("language-hyperlink"));
+    lumine.config.set("language.useTreeSitterParsers", false);
+    waitsForPromise(() => lumine.packages.activatePackage("language-hyperlink"));
 
-    runs(() => (grammar = atom.grammars.grammarForScopeName("text.hyperlink")));
+    runs(() => (grammar = lumine.grammars.grammarForScopeName("text.hyperlink")));
   });
 
   it("parses the grammar", function () {
@@ -20,7 +20,7 @@ describe("Hyperlink grammar", function () {
   });
 
   it("parses http: and https: links", function () {
-    const plainGrammar = atom.grammars.selectGrammar();
+    const plainGrammar = lumine.grammars.selectGrammar();
 
     let { tokens } = plainGrammar.tokenizeLine("http://github.com");
     expect(tokens[0]).toEqual({
@@ -34,21 +34,21 @@ describe("Hyperlink grammar", function () {
       scopes: ["text.plain.null-grammar", "markup.underline.link.https.hyperlink"],
     });
 
-    ({ tokens } = plainGrammar.tokenizeLine("http://twitter.com/#!/AtomEditor"));
+    ({ tokens } = plainGrammar.tokenizeLine("http://twitter.com/#!/LumineEditor"));
     expect(tokens[0]).toEqual({
-      value: "http://twitter.com/#!/AtomEditor",
+      value: "http://twitter.com/#!/LumineEditor",
       scopes: ["text.plain.null-grammar", "markup.underline.link.http.hyperlink"],
     });
 
-    ({ tokens } = plainGrammar.tokenizeLine("https://github.com/atom/brightray_example"));
+    ({ tokens } = plainGrammar.tokenizeLine("https://github.com/example/brightray_example"));
     expect(tokens[0]).toEqual({
-      value: "https://github.com/atom/brightray_example",
+      value: "https://github.com/example/brightray_example",
       scopes: ["text.plain.null-grammar", "markup.underline.link.https.hyperlink"],
     });
   });
 
   it("parses http: and https: links that contains unicode characters", function () {
-    const plainGrammar = atom.grammars.selectGrammar();
+    const plainGrammar = lumine.grammars.selectGrammar();
 
     const { tokens } = plainGrammar.tokenizeLine("https://sv.wikipedia.org/wiki/Mañana");
     expect(tokens[0]).toEqual({
@@ -58,7 +58,7 @@ describe("Hyperlink grammar", function () {
   });
 
   it("parses other links", function () {
-    const plainGrammar = atom.grammars.selectGrammar();
+    const plainGrammar = lumine.grammars.selectGrammar();
 
     let { tokens } = plainGrammar.tokenizeLine("mailto:noreply@example.com");
     expect(tokens[0]).toEqual({
@@ -82,7 +82,7 @@ describe("Hyperlink grammar", function () {
   });
 
   it("does not parse links in a regex string", function () {
-    const testGrammar = atom.grammars.loadGrammarSync(
+    const testGrammar = lumine.grammars.loadGrammarSync(
       path.join(__dirname, "fixtures", "test-grammar.json"),
     );
 
@@ -100,10 +100,10 @@ describe("Hyperlink grammar", function () {
       // This is the reason the injection selector is `text - string.regexp` instead.
       // https://github.com/atom/language-php/issues/219
 
-      waitsForPromise(() => atom.packages.activatePackage("language-php"));
+      waitsForPromise(() => lumine.packages.activatePackage("language-php"));
 
       runs(() => {
-        const phpGrammar = atom.grammars.grammarForScopeName("text.html.php");
+        const phpGrammar = lumine.grammars.grammarForScopeName("text.html.php");
         const { tokens } = phpGrammar.tokenizeLine('<?php "/mailto:/" ?>');
         expect(tokens[3]).toEqual({
           value: "mailto:",
@@ -120,7 +120,7 @@ describe("Hyperlink grammar", function () {
 
   describe("parsing cfml strings", function () {
     it("does not include anything between (and including) pound signs", function () {
-      const plainGrammar = atom.grammars.selectGrammar();
+      const plainGrammar = lumine.grammars.selectGrammar();
       const { tokens } = plainGrammar.tokenizeLine("http://github.com/#username#");
       expect(tokens[0]).toEqual({
         value: "http://github.com/",
@@ -129,10 +129,10 @@ describe("Hyperlink grammar", function () {
     });
 
     it("still includes single pound signs", function () {
-      const plainGrammar = atom.grammars.selectGrammar();
-      const { tokens } = plainGrammar.tokenizeLine("http://github.com/atom/#start-of-content");
+      const plainGrammar = lumine.grammars.selectGrammar();
+      const { tokens } = plainGrammar.tokenizeLine("http://github.com/example/#start-of-content");
       expect(tokens[0]).toEqual({
-        value: "http://github.com/atom/#start-of-content",
+        value: "http://github.com/example/#start-of-content",
         scopes: ["text.plain.null-grammar", "markup.underline.link.http.hyperlink"],
       });
     });
@@ -140,23 +140,23 @@ describe("Hyperlink grammar", function () {
 
   describe("parsing matching parentheses", function () {
     it("still includes matching parentheses", function () {
-      const plainGrammar = atom.grammars.selectGrammar();
+      const plainGrammar = lumine.grammars.selectGrammar();
       const { tokens } = plainGrammar.tokenizeLine(
-        "https://en.wikipedia.org/wiki/Atom_(text_editor)",
+        "https://en.wikipedia.org/wiki/Example_(text_editor)",
       );
       expect(tokens[0]).toEqual({
-        value: "https://en.wikipedia.org/wiki/Atom_(text_editor)",
+        value: "https://en.wikipedia.org/wiki/Example_(text_editor)",
         scopes: ["text.plain.null-grammar", "markup.underline.link.https.hyperlink"],
       });
     });
 
     it("does not include wrapping parentheses", function () {
-      const plainGrammar = atom.grammars.selectGrammar();
+      const plainGrammar = lumine.grammars.selectGrammar();
       const { tokens } = plainGrammar.tokenizeLine(
-        "(https://en.wikipedia.org/wiki/Atom_(text_editor))",
+        "(https://en.wikipedia.org/wiki/Example_(text_editor))",
       );
       expect(tokens[1]).toEqual({
-        value: "https://en.wikipedia.org/wiki/Atom_(text_editor)",
+        value: "https://en.wikipedia.org/wiki/Example_(text_editor)",
         scopes: ["text.plain.null-grammar", "markup.underline.link.https.hyperlink"],
       });
     });
@@ -167,7 +167,7 @@ describe("Hyperlink grammar", function () {
     // markdown emphasis or strikethrough closer is swallowed by the link. They
     // stay legal in the middle of a URL — only the last character is refused.
     it("does not include a trailing underscore", function () {
-      const plainGrammar = atom.grammars.selectGrammar();
+      const plainGrammar = lumine.grammars.selectGrammar();
       const { tokens } = plainGrammar.tokenizeLine("http://example.com/foo_");
       expect(tokens[0]).toEqual({
         value: "http://example.com/foo",
@@ -176,7 +176,7 @@ describe("Hyperlink grammar", function () {
     });
 
     it("still includes an underscore in the middle", function () {
-      const plainGrammar = atom.grammars.selectGrammar();
+      const plainGrammar = lumine.grammars.selectGrammar();
       const { tokens } = plainGrammar.tokenizeLine("http://example.com/a_b/c");
       expect(tokens[0]).toEqual({
         value: "http://example.com/a_b/c",
@@ -185,7 +185,7 @@ describe("Hyperlink grammar", function () {
     });
 
     it("does not include trailing tildes", function () {
-      const plainGrammar = atom.grammars.selectGrammar();
+      const plainGrammar = lumine.grammars.selectGrammar();
       const { tokens } = plainGrammar.tokenizeLine("~~http://example.com~~");
       expect(tokens[1]).toEqual({
         value: "http://example.com",
@@ -194,7 +194,7 @@ describe("Hyperlink grammar", function () {
     });
 
     it("does not include a trailing exclamation mark or pipe", function () {
-      const plainGrammar = atom.grammars.selectGrammar();
+      const plainGrammar = lumine.grammars.selectGrammar();
 
       let { tokens } = plainGrammar.tokenizeLine("http://example.com!");
       expect(tokens[0]).toEqual({
@@ -210,7 +210,7 @@ describe("Hyperlink grammar", function () {
     });
 
     it("applies the same guard to mailto: links", function () {
-      const plainGrammar = atom.grammars.selectGrammar();
+      const plainGrammar = lumine.grammars.selectGrammar();
       const { tokens } = plainGrammar.tokenizeLine("mailto:noreply@example.com_");
       expect(tokens[0]).toEqual({
         value: "mailto:noreply@example.com",

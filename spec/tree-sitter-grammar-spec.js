@@ -15,15 +15,15 @@ const LINK_SCOPE = "markup.underline.link.hyperlink";
 
 describe("Hyperlink Tree-sitter grammar", () => {
   beforeEach(async () => {
-    atom.config.set("language.useTreeSitterParsers", true);
-    await atom.packages.activatePackage("language-hyperlink");
+    lumine.config.set("language.useTreeSitterParsers", true);
+    await lumine.packages.activatePackage("language-hyperlink");
   });
 
   // Returns the substring of `text` that carries the link scope, or null when
   // nothing does.
   async function linkIn(text) {
-    const editor = await atom.workspace.open();
-    editor.setGrammar(atom.grammars.grammarForScopeName("text.hyperlink"));
+    const editor = await lumine.workspace.open();
+    editor.setGrammar(lumine.grammars.grammarForScopeName("text.hyperlink"));
     editor.setText(text);
     await editor.languageMode.ready;
 
