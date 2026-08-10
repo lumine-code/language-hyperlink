@@ -3,15 +3,15 @@ const path = require("path");
 describe("Hyperlink grammar", function () {
   let grammar = null;
 
-  beforeEach(function () {
+  beforeEach(async () => {
     // These specs all tokenize a line in isolation, which only a TextMate
     // grammar can do, so this file covers `grammars/hyperlink.json` alone.
     // The Tree-sitter grammar is covered by `tree-sitter-grammar-spec.js`,
     // which asserts scope ranges in a real buffer instead.
     lumine.config.set("language.useTreeSitterParsers", false);
-    waitsForPromise(() => lumine.packages.activatePackage("language-hyperlink"));
+    await lumine.packages.activatePackage("language-hyperlink");
 
-    runs(() => (grammar = lumine.grammars.grammarForScopeName("text.hyperlink")));
+    grammar = lumine.grammars.grammarForScopeName("text.hyperlink");
   });
 
   it("parses the grammar", function () {
@@ -94,26 +94,24 @@ describe("Hyperlink grammar", function () {
   });
 
   describe("parsing PHP strings", () => {
-    it("does not parse links in a regex string", function () {
+    it("does not parse links in a regex string", async () => {
       // PHP is unique in that its root scope is `text.html.php`, meaning that even though
       // `string - string.regexp` won't match in a regex string, `text` still will.
       // This is the reason the injection selector is `text - string.regexp` instead.
       // https://github.com/atom/language-php/issues/219
 
-      waitsForPromise(() => lumine.packages.activatePackage("language-php"));
+      await lumine.packages.activatePackage("language-php");
 
-      runs(() => {
-        const phpGrammar = lumine.grammars.grammarForScopeName("text.html.php");
-        const { tokens } = phpGrammar.tokenizeLine('<?php "/mailto:/" ?>');
-        expect(tokens[3]).toEqual({
-          value: "mailto:",
-          scopes: [
-            "text.html.php",
-            "meta.embedded.line.php",
-            "source.php",
-            "string.regexp.double-quoted.php",
-          ],
-        });
+      const phpGrammar = lumine.grammars.grammarForScopeName("text.html.php");
+      const { tokens } = phpGrammar.tokenizeLine('<?php "/mailto:/" ?>');
+      expect(tokens[3]).toEqual({
+        value: "mailto:",
+        scopes: [
+          "text.html.php",
+          "meta.embedded.line.php",
+          "source.php",
+          "string.regexp.double-quoted.php",
+        ],
       });
     });
   });
