@@ -9,11 +9,11 @@ Hyperlink colorization.
 
 ## Installation
 
-To install `language-hyperlink` search for _language-hyperlink_ in the Install pane of the Lumine settings or run `lumine --install lumine-code/language-hyperlink`.
+To install `language-hyperlink` search for it in the Install pane of the Lumine settings, or run the command `lumine --install lumine-code/language-hyperlink`.
 
 ## Services
 
-- **[hyperlink.injection](docs/hyperlink.injection.md)** (`1.0.0`): provided to let other language packages highlight URLs inside their strings and comments as clickable links.
+- [`hyperlink.injection`](docs/hyperlink.injection.md): provided to let other language packages highlight URLs inside their strings and comments as clickable links.
 
 ## Contributing
 
