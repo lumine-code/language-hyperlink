@@ -1,0 +1,19 @@
+{
+  "name": "TestTextGrammar",
+  "scopeName": "text.test",
+  "fileTypes": [],
+  "patterns": [
+    {
+      "name": "source.embedded.test",
+      "begin": "<\\?",
+      "end": "\\?>",
+      "patterns": [
+        {
+          "name": "string.regexp.test",
+          "begin": "\"",
+          "end": "\""
+        }
+      ]
+    }
+  ]
+}

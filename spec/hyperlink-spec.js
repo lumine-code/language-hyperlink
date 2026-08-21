@@ -93,25 +93,34 @@ describe("Hyperlink grammar", function () {
     });
   });
 
-  describe("parsing PHP strings", () => {
-    it("does not parse links in a regex string", async () => {
-      // PHP is unique in that its root scope is `text.html.php`, meaning that even though
-      // `string - string.regexp` won't match in a regex string, `text` still will.
-      // This is the reason the injection selector is `text - string.regexp` instead.
-      // https://github.com/atom/language-php/issues/219
+  describe("parsing a text-rooted grammar", function () {
+    // A grammar that embeds code in a `text.*` root — PHP is the one everybody
+    // meets, `text.html.php` wrapping `source.php` — matches the `text` branch of
+    // the injection selector at every position, including inside a regex string
+    // that the `string` branch already excludes. `text - string.regexp` is what
+    // carries the exclusion across to that branch.
+    // https://github.com/atom/language-php/issues/219
+    let textGrammar = null;
 
-      await lumine.packages.activatePackage("language-php");
+    beforeEach(() => {
+      textGrammar = lumine.grammars.loadGrammarSync(
+        path.join(__dirname, "fixtures", "test-text-grammar.json"),
+      );
+    });
 
-      const phpGrammar = lumine.grammars.grammarForScopeName("text.html.php");
-      const { tokens } = phpGrammar.tokenizeLine('<?php "/mailto:/" ?>');
+    it("parses links in embedded code", function () {
+      const { tokens } = textGrammar.tokenizeLine("<? http://github.com ?>");
+      expect(tokens[2]).toEqual({
+        value: "http://github.com",
+        scopes: ["text.test", "source.embedded.test", "markup.underline.link.http.hyperlink"],
+      });
+    });
+
+    it("does not parse links in a regex string", function () {
+      const { tokens } = textGrammar.tokenizeLine('<? "/mailto:/" ?>');
       expect(tokens[3]).toEqual({
-        value: "mailto:",
-        scopes: [
-          "text.html.php",
-          "meta.embedded.line.php",
-          "source.php",
-          "string.regexp.double-quoted.php",
-        ],
+        value: "/mailto:/",
+        scopes: ["text.test", "source.embedded.test", "string.regexp.test"],
       });
     });
   });
