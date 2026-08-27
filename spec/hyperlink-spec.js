@@ -8,7 +8,7 @@ describe("Hyperlink grammar", function () {
     // grammar can do, so this file covers `grammars/hyperlink.json` alone.
     // The Tree-sitter grammar is covered by `tree-sitter-grammar-spec.js`,
     // which asserts scope ranges in a real buffer instead.
-    lumine.config.set("language.useTreeSitterParsers", false);
+    lumine.config.set("editor.useTreeSitterParsers", false);
     await lumine.packages.activatePackage("language-hyperlink");
 
     grammar = lumine.grammars.grammarForScopeName("text.hyperlink");
