@@ -5,7 +5,7 @@
   "parser": "tree-sitter-hyperlink",
   "injectionNames": ["hyperlink"],
   "treeSitter": {
-    "parserSource": "github:lumine-code/tree-sitter-hyperlink#10432be269024e53d008920eea24e35649aa537f",
+    "parserSource": "github:lumine-code/tree-sitter-hyperlink#d294ce5",
     "wasmBuildTool": "tree-sitter-cli#v0.27.0",
     "grammar": "hyperlink.wasm",
     "highlightsQuery": "hyperlink-highlights.scm"
