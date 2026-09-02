@@ -1,18 +1,13 @@
 {
+  // name: 'Hyperlink'
   "scopeName": "text.hyperlink",
-  "injectionSelector": "text - string.regexp, string - string.regexp, comment, source.gfm",
-  "patterns": [
-    {
-      "match": "(?x)\\b(https?|s?ftp|ftps|file|smb|afp|nfs|(?:x-)?man(?:-page)?|gopher|txmt|issue|lumine)://((?!(\\#[[:word:]]*\\#))(?:[-:@[:word:].,~%+_/?=&#;|!]|\\((?:(?!(\\#[[:word:]]*\\#))[-:@[:word:].,~%+_/?=&#;|!])*\\)))+(?<![-.,?:#;_~!|])",
-      "name": "markup.underline.link.$1.hyperlink"
-    },
-    {
-      "match": "(?x)\\b(mailto):((?!(\\#[[:word:]]*\\#))(?:[-:@[:word:].,~%+_/?=&#;|!]))+(?<![-.,?:#;_~!|])",
-      "name": "markup.underline.link.$1.hyperlink"
-    },
-    {
-      "match": "(?i)\\bRFC(?: |(?<= RFC))(\\d+)\\b",
-      "name": "markup.underline.link.rfc.$1.hyperlink"
-    }
-  ]
+  "type": "tree-sitter",
+  "parser": "tree-sitter-hyperlink",
+  "injectionNames": ["hyperlink"],
+  "treeSitter": {
+    "parserSource": "github:lumine-code/tree-sitter-hyperlink#bb628262e36b589ce66a9bf0e94b74c59db0e883",
+    "wasmBuildTool": "tree-sitter-cli#v0.26.13",
+    "grammar": "hyperlink.wasm",
+    "highlightsQuery": "hyperlink-highlights.scm"
+  }
 }

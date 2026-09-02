@@ -9,7 +9,7 @@ Lets a language grammar highlight URLs inside its own strings and comments, by i
 | Consumed by | `consumeHyperlinkInjection(hyperlink)`                       |
 | Owner       | `language-hyperlink` (bundled)                               |
 
-Consumed by nineteen language packages, and by far the cheapest service in the workspace to adopt: a grammar package names the Tree-sitter node types that may contain a URL, and the rest is handled for it. The sibling service `todo.injection` has an identical shape.
+Consumed by language packages across the workspace: a grammar package names the Tree-sitter node types that may contain a URL, and the rest is handled for it. The sibling service `todo.injection` has an identical shape.
 
 ## Registration
 
@@ -25,7 +25,7 @@ In your `package.json`:
 }
 ```
 
-This only applies to **Tree-sitter** grammars — injection points are a Tree-sitter concept. A TextMate-only grammar package has nothing to consume here.
+The service registers Tree-sitter injection points on the exact parent grammar scopes supplied by the consumer.
 
 ## Contract
 
@@ -37,6 +37,8 @@ type HyperlinkInjection = {
       types: string | string[];
       language?(node: Node): string | null | undefined;
       content?(node: Node): Node | Node[];
+      languageScope?: string | null;
+      includeChildren?: boolean;
     },
   ): void;
 
@@ -50,6 +52,8 @@ type HyperlinkInjection = {
 | `options.types`                         | Required. One node type or an array of them — the nodes that may contain a URL.                                                      |
 | `options.language(node)`                | Optional. Return a language name to force one, `null` to suppress the injection, or `undefined` to fall through to the default test. |
 | `options.content(node)`                 | Optional. Narrows the injection to some of the node's children. Defaults to the node itself.                                         |
+| `options.languageScope`                 | Optional. Sets scopes on the injected ranges; defaults to `null`, so only hyperlink captures are added.                              |
+| `options.includeChildren`               | Optional. Includes descendants in the injected ranges. Defaults to `false`.                                                          |
 | `test(node)`                            | The default check — whether the node's text contains a URL. Exposed for a custom `language` callback.                                |
 
 ## Minimal example

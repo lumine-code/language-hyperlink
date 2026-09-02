@@ -2,7 +2,7 @@
 //
 // `text.hyperlink` is only ever injected in real use, but it is a registered
 // grammar like any other, so assigning it to a buffer directly exercises the
-// parser and `ts/highlights.scm` without dragging in a host language package —
+// parser and `hyperlink-highlights.scm` without dragging in a host language package —
 // which matters, because CI checks out this package on its own.
 //
 // Extent is the whole point here. The parser's own corpus in
@@ -15,7 +15,6 @@ const LINK_SCOPE = "markup.underline.link.hyperlink";
 
 describe("Hyperlink Tree-sitter grammar", () => {
   beforeEach(async () => {
-    lumine.config.set("editor.useTreeSitterParsers", true);
     await lumine.packages.activatePackage("language-hyperlink");
   });
 
