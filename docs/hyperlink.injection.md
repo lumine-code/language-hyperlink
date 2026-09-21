@@ -40,7 +40,7 @@ type HyperlinkInjection = {
       languageScope?: string | null;
       includeChildren?: boolean;
     },
-  ): void;
+  ): Disposable;
 
   test(node: Node): boolean;
 };
@@ -48,7 +48,7 @@ type HyperlinkInjection = {
 
 | Member                                  | Description                                                                                                                          |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `addInjectionPoint(scopeName, options)` | Registers an injection point on a grammar. `scopeName` is the parent language's scope, e.g. `source.python`.                         |
+| `addInjectionPoint(scopeName, options)` | Registers an injection point on a grammar and returns its cleanup. `scopeName` is the parent language's scope, e.g. `source.python`. |
 | `options.types`                         | Required. One node type or an array of them — the nodes that may contain a URL.                                                      |
 | `options.language(node)`                | Optional. Return a language name to force one, `null` to suppress the injection, or `undefined` to fall through to the default test. |
 | `options.content(node)`                 | Optional. Narrows the injection to some of the node's children. Defaults to the node itself.                                         |
@@ -62,9 +62,14 @@ type HyperlinkInjection = {
 const SCOPES = ["source.mylang", "source.mylang.embedded"];
 
 exports.consumeHyperlinkInjection = (hyperlink) => {
-  for (const scope of SCOPES) {
-    hyperlink.addInjectionPoint(scope, { types: ["comment", "string_content"] });
-  }
+  const registrations = SCOPES.map((scope) =>
+    hyperlink.addInjectionPoint(scope, { types: ["comment", "string_content"] }),
+  );
+  return {
+    dispose() {
+      for (const registration of registrations.splice(0)) registration.dispose();
+    },
+  };
 };
 ```
 
@@ -76,11 +81,11 @@ By default the hyperlink grammar is injected only into nodes whose text actually
 
 Pick the narrowest node types that can hold a URL. `comment` and `string_content` are the usual pair; injecting into a whole `string` node re-scans the quotes for nothing.
 
-Registration happens when your package activates and is not undone — see Teardown.
+Registration happens when the service edge is connected and is owned by that edge — see Teardown.
 
 ## Teardown
 
-`addInjectionPoint` returns nothing and there is no way to remove an injection point, so the registration lasts for the life of the window. Register at activation, unconditionally, and do not try to add or remove them in response to settings.
+`addInjectionPoint` returns a `Disposable` that removes every injection point created for `options.types`. A consumer must return that disposable from its service callback; when it registers several scopes, it returns one aggregate disposable that owns them all. This lets provider disable, consumer disable and package reactivation remove the old generation before reconnecting the edge.
 
 ## Versioning
 
