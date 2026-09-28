@@ -22,7 +22,7 @@ describe("Hyperlink sample fixture", () => {
     const position = editor.getBuffer().positionForCharacterIndex(index);
 
     expect(editor.getGrammar().scopeName).toBe("source.gfm");
-    expect(languageMode.tree.rootNode.hasError).toBe(false);
+    expect((await editor.getSyntaxDiagnostics()).hasError).toBe(false);
     await conditionPromise(() =>
       editor
         .scopeDescriptorForBufferPosition(position)
