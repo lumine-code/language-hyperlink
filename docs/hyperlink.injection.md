@@ -9,11 +9,22 @@ Lets a language grammar highlight URLs inside its own strings and comments, by i
 | Consumed by | `consumeHyperlinkInjection(hyperlink)`                       |
 | Owner       | `language-hyperlink` (bundled)                               |
 
-Consumed by language packages across the workspace: a grammar package names the Tree-sitter node types that may contain a URL, and the rest is handled for it. The sibling service `todo.injection` has an identical shape.
+Prefer a static injection query when the syntax tree identifies the URL-bearing nodes. This service remains available when eligibility or content needs runtime logic. The sibling service `todo.injection` has an identical shape.
 
 ## Registration
 
-In your `package.json`:
+For static rules, declare `treeSitter.injectionsQuery` in the parent grammar descriptor and put this pattern in the referenced SCM file:
+
+```scheme
+([(comment) (string_content)] @injection.owner @injection.content
+  (#set! injection.language "hyperlink")
+  (#set! injection.include-children)
+  (#set! injection.language-scope "none"))
+```
+
+Replace the node types with the actual types in the parent parser. Include children when the comment body lives in a child node; choose literal content nodes for strings so expressions stay outside the injected source. The target grammar declares `injectionContentRegex`, which filters owners without URL prefixes before a child layer is created. No consumed service or JavaScript entry point is needed. The editor adds injections when the target grammar becomes available and removes them when it is disabled.
+
+For the JavaScript service, declare this in your `package.json`:
 
 ```json
 {
@@ -77,7 +88,7 @@ exports.consumeHyperlinkInjection = (hyperlink) => {
 
 Call `addInjectionPoint` once per scope name your package ships. A grammar with dialects registers each scope separately — the scope table is keyed by exact name, not by prefix, so `source.python` does not cover `source.python.ipy`.
 
-By default the hyperlink grammar is injected only into nodes whose text actually contains a URL, which is what keeps this cheap on large files. Supplying your own `language` callback replaces that test for the cases it answers; call `test(node)` inside it to keep the default behavior for the rest.
+By default the hyperlink grammar is injected only into nodes whose text contains an HTTP or HTTPS prefix, which is what keeps this cheap on large files. Static rules and the service's default test use the same `injectionContentRegex` from the target grammar descriptor. Supplying your own `language` callback replaces that test for the cases it answers; call `test(node)` inside it to keep the default behavior for the rest. The target prefilter is applied only to static rules, so a JavaScript callback can still deliberately override the default test.
 
 Pick the narrowest node types that can hold a URL. `comment` and `string_content` are the usual pair; injecting into a whole `string` node re-scans the quotes for nothing.
 

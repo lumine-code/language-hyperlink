@@ -1,9 +1,9 @@
 {
-  // name: 'Hyperlink'
   "scopeName": "text.hyperlink",
   "type": "tree-sitter",
   "parser": "tree-sitter-hyperlink",
   "injectionNames": ["hyperlink"],
+  "injectionContentRegex": "\\bhttps?:",
   "treeSitter": {
     "parserSource": "github:lumine-code/tree-sitter-hyperlink#ce9dec211188a55e4e73b8ed87a8aefaa0d8e54f",
     "wasmBuildTool": "tree-sitter-cli#v0.27.0",
