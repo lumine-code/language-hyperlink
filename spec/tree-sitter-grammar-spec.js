@@ -91,6 +91,53 @@ describe("Hyperlink Tree-sitter grammar", () => {
     });
   });
 
+  describe("URLs before trailing prose", () => {
+    it("keeps the complete query string", async () => {
+      expect(await linkIn("before https://example.com/path?q=1 after")).toBe(
+        "https://example.com/path?q=1",
+      );
+      expect(await linkIn("before https://example.com/?filter[name]=x&page=2 after")).toBe(
+        "https://example.com/?filter[name]=x&page=2",
+      );
+      expect(await linkIn("before https://example.com/foo?first=1;second=2 after")).toBe(
+        "https://example.com/foo?first=1;second=2",
+      );
+      expect(await linkIn("before https://example.com/foo?first=1?second=2 after")).toBe(
+        "https://example.com/foo?first=1?second=2",
+      );
+    });
+
+    it("keeps punctuation inside the path", async () => {
+      expect(await linkIn("before https://example.com/a_b/file.name after")).toBe(
+        "https://example.com/a_b/file.name",
+      );
+      expect(await linkIn("before https://example.com/a,b:c;d after")).toBe(
+        "https://example.com/a,b:c;d",
+      );
+    });
+
+    it("keeps fragments with and without a query", async () => {
+      expect(await linkIn("before https://example.com/path#section after")).toBe(
+        "https://example.com/path#section",
+      );
+      expect(await linkIn("before https://example.com/path?q=1#section after")).toBe(
+        "https://example.com/path?q=1#section",
+      );
+    });
+
+    it("stops at prose punctuation and surrounding delimiters after a query", async () => {
+      expect(await linkIn("before (https://example.com/path?q=1). after")).toBe(
+        "https://example.com/path?q=1",
+      );
+      expect(await linkIn("before **[site](https://example.com/path?q=1)** after")).toBe(
+        "https://example.com/path?q=1",
+      );
+      expect(await linkIn("before <https://example.com/path?q=1> after")).toBe(
+        "https://example.com/path?q=1",
+      );
+    });
+  });
+
   describe("accepted truncations", () => {
     // These are the cost of refusing to end a URL on a markdown delimiter, and
     // they are deliberate: GFM's autolink extension excludes `? ! . , : * _ ~`
