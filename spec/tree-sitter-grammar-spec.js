@@ -38,6 +38,41 @@ describe("Hyperlink Tree-sitter grammar", () => {
     return null;
   }
 
+  async function openText(text) {
+    const editor = await lumine.workspace.open();
+    editor.setGrammar(lumine.grammars.grammarForScopeName("text.hyperlink"));
+    await editor.languageMode.ready;
+    editor.setText(text);
+    await editor.languageMode.atTransactionEnd();
+    return editor;
+  }
+
+  function links(editor) {
+    return editor.languageMode.rootLanguageLayer.tree.rootNode.descendantsOfType("url");
+  }
+
+  function expectLinkScopes(editor, expected) {
+    const nodes = links(editor);
+    expect(nodes.map((node) => node.text)).toEqual(expected);
+    for (const node of nodes) {
+      const startScopes = editor
+        .scopeDescriptorForBufferPosition(node.startPosition)
+        .getScopesArray();
+      expect(startScopes.includes(LINK_SCOPE)).withContext(JSON.stringify(startScopes)).toBe(true);
+      const inside = editor.getBuffer().positionForCharacterIndex(node.endIndex - 1);
+      expect(
+        editor.scopeDescriptorForBufferPosition(inside).getScopesArray().includes(LINK_SCOPE),
+      ).toBe(true);
+      // EOF has no character to the right and may report the preceding scope.
+      if (node.endIndex < editor.getText().length) {
+        const endScopes = editor
+          .scopeDescriptorForBufferPosition(node.endPosition)
+          .getScopesArray();
+        expect(endScopes.includes(LINK_SCOPE)).withContext(JSON.stringify(endScopes)).toBe(false);
+      }
+    }
+  }
+
   describe("markdown delimiters", () => {
     it("stops at the closing paren of a link wrapped in emphasis", async () => {
       expect(await linkIn("**[Lumine](https://github.com/lumine-code/lumine)**")).toBe(
@@ -61,6 +96,77 @@ describe("Hyperlink Tree-sitter grammar", () => {
   });
 
   describe("parentheses", () => {
+    it("starts separate captured and scoped links at HTTP prefixes inside parentheses", async () => {
+      for (const [text, expected] of [
+        [
+          "https://example.com/a(http://other.example/path)",
+          ["https://example.com/a", "http://other.example/path"],
+        ],
+        [
+          "https://example.com(https://other.example/a(b)",
+          ["https://example.com", "https://other.example/a(b)"],
+        ],
+      ]) {
+        const editor = await openText(text);
+        expectLinkScopes(editor, expected);
+        expect(editor.languageMode.rootLanguageLayer.tree.rootNode.hasError).toBe(false);
+      }
+    });
+
+    it("updates link captures and scopes when parentheses become complete or incomplete", async () => {
+      const editor = await openText("https://example.com/a(b");
+      expectLinkScopes(editor, ["https://example.com/a"]);
+      editor.getBuffer().append(")");
+      await editor.languageMode.atTransactionEnd();
+      expectLinkScopes(editor, ["https://example.com/a(b)"]);
+      editor.getBuffer().delete([
+        [0, editor.getText().length - 1],
+        [0, editor.getText().length],
+      ]);
+      await editor.languageMode.atTransactionEnd();
+      expectLinkScopes(editor, ["https://example.com/a"]);
+      editor.setText("https://example.com/a(https://other.example/path)");
+      await editor.languageMode.atTransactionEnd();
+      expectLinkScopes(editor, ["https://example.com/a", "https://other.example/path"]);
+      expect(editor.languageMode.rootLanguageLayer.tree.rootNode.hasError).toBe(false);
+    });
+
+    it("keeps root parser work linear for repeated incomplete URL groups", async () => {
+      for (const count of [512, 1024]) {
+        const editor = await openText("");
+        const languageMode = editor.languageMode;
+        const acquire = languageMode.acquireParserForLanguage;
+        const parsers = new Set();
+        let consumed = 0;
+        let processed = 0;
+        let reduced = 0;
+        spyOn(languageMode, "acquireParserForLanguage").and.callFake(function (...args) {
+          const parser = acquire.apply(this, args);
+          parsers.add(parser);
+          parser.setLogger((message) => {
+            if (message.startsWith("consume ")) consumed++;
+            if (message.startsWith("process ")) processed++;
+            if (message.startsWith("reduce ")) reduced++;
+          });
+          return parser;
+        });
+        try {
+          const source = "https://x(".repeat(count);
+          editor.setText(source);
+          await languageMode.atTransactionEnd();
+          expect(links(editor).length).toBe(count);
+          expect(languageMode.rootLanguageLayer.tree.rootNode.hasError).toBe(false);
+          expect(consumed).toBeGreaterThan(0);
+          expect(consumed).toBeLessThan(source.length * 8);
+          expect(processed).toBeLessThan(source.length * 5);
+          expect(reduced).toBeLessThan(source.length * 5);
+          expectLinkScopes(editor, Array(count).fill("https://x"));
+        } finally {
+          for (const parser of parsers) parser.setLogger(null);
+        }
+      }
+    });
+
     it("keeps a paired pair", async () => {
       expect(await linkIn("(see https://en.wikipedia.org/wiki/Foo_(bar))")).toBe(
         "https://en.wikipedia.org/wiki/Foo_(bar)",
