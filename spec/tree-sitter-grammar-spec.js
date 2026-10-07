@@ -75,6 +75,12 @@ describe("Hyperlink Tree-sitter grammar", () => {
       expect(await linkIn("https://example.com)x")).toBe("https://example.com");
       expect(await linkIn("[a](https://example.com)")).toBe("https://example.com");
     });
+
+    it("stops before an incomplete opening group", async () => {
+      expect(await linkIn("https://example.com/a(b")).toBe("https://example.com/a");
+      expect(await linkIn("https://example.com/a(b(c)d")).toBe("https://example.com/a");
+      expect(await linkIn("https://example.com/a(b)c(d")).toBe("https://example.com/a(b)c");
+    });
   });
 
   describe("URLs that keep their punctuation", () => {
@@ -92,6 +98,10 @@ describe("Hyperlink Tree-sitter grammar", () => {
   });
 
   describe("URLs before trailing prose", () => {
+    it("recognizes a URL after a NUL character", async () => {
+      expect(await linkIn("\0https://example.com/a\0")).toBe("https://example.com/a");
+    });
+
     it("keeps the complete query string", async () => {
       expect(await linkIn("before https://example.com/path?q=1 after")).toBe(
         "https://example.com/path?q=1",
