@@ -2,6 +2,8 @@
 
 Hyperlink colorization.
 
+Fork of [pulsar-edit/pulsar](https://github.com/pulsar-edit/pulsar) (`packages/language-hyperlink`).
+
 ## Features
 
 - **Grammars**: provides a Tree-sitter grammar built from [tree-sitter-hyperlink](https://github.com/lumine-code/tree-sitter-hyperlink).
