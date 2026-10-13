@@ -1,0 +1,16 @@
+{
+  "title": "language-hyperlink",
+  "description": "Highlight URLs inside comments and strings.",
+  "recordedOn": "2026-10-13",
+  "sourceRevision": "cb1fede10d499264a254ff761a1d17fa608d6e54",
+  "mode": "normal",
+  "fontSettings": "default",
+  "images": [
+    {
+      "file": "demo.png",
+      "label": "Highlight URLs inside comments and strings.",
+      "width": 1100,
+      "height": 340
+    }
+  ]
+}
