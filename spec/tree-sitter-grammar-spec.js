@@ -144,9 +144,9 @@ describe("Hyperlink Tree-sitter grammar", () => {
           const parser = acquire.apply(this, args);
           parsers.add(parser);
           parser.setLogger((message) => {
-            if (message === "consume") consumed++;
-            if (message === "process") processed++;
-            if (message === "reduce") reduced++;
+            if (message.startsWith("consume")) consumed++;
+            if (message.startsWith("process")) processed++;
+            if (message.startsWith("reduce")) reduced++;
           });
           return parser;
         });
