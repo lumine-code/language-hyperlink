@@ -29,7 +29,7 @@
   "providedServices": {
     "hyperlink.injection": {
       "versions": {
-        "1.0.0": "provideHyperlinkInjection"
+        "2.0.0": "provideHyperlinkInjection"
       }
     }
   },

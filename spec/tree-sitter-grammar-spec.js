@@ -14,6 +14,8 @@
 const LINK_SCOPE = "markup.underline.link.hyperlink";
 
 describe("Hyperlink Tree-sitter grammar", () => {
+  const inspect = (editor) =>
+    editor.analyzeSyntax(require.resolve("./helpers/syntax-tree"), "inspect");
   beforeEach(async () => {
     await lumine.packages.activatePackage("language-hyperlink");
   });
@@ -25,6 +27,7 @@ describe("Hyperlink Tree-sitter grammar", () => {
     editor.setGrammar(lumine.grammars.grammarForScopeName("text.hyperlink"));
     editor.setText(text);
     await editor.languageMode.ready;
+    await editor.languageMode.refresh?.();
 
     let start = null;
     for (let column = 0; column <= text.length; column++) {
@@ -47,12 +50,13 @@ describe("Hyperlink Tree-sitter grammar", () => {
     return editor;
   }
 
-  function links(editor) {
-    return editor.languageMode.rootLanguageLayer.tree.rootNode.descendantsOfType("url");
+  async function links(editor) {
+    return (await inspect(editor)).links;
   }
 
-  function expectLinkScopes(editor, expected) {
-    const nodes = links(editor);
+  async function expectLinkScopes(editor, expected) {
+    const nodes = await links(editor);
+    await editor.languageMode.refresh?.();
     expect(nodes.map((node) => node.text)).toEqual(expected);
     for (const node of nodes) {
       const startScopes = editor
@@ -108,62 +112,70 @@ describe("Hyperlink Tree-sitter grammar", () => {
         ],
       ]) {
         const editor = await openText(text);
-        expectLinkScopes(editor, expected);
-        expect(editor.languageMode.rootLanguageLayer.tree.rootNode.hasError).toBe(false);
+        await expectLinkScopes(editor, expected);
+        expect((await inspect(editor)).hasError).toBe(false);
       }
     });
 
     it("updates link captures and scopes when parentheses become complete or incomplete", async () => {
       const editor = await openText("https://example.com/a(b");
-      expectLinkScopes(editor, ["https://example.com/a"]);
+      await expectLinkScopes(editor, ["https://example.com/a"]);
       editor.getBuffer().append(")");
       await editor.languageMode.atTransactionEnd();
-      expectLinkScopes(editor, ["https://example.com/a(b)"]);
+      await expectLinkScopes(editor, ["https://example.com/a(b)"]);
       editor.getBuffer().delete([
         [0, editor.getText().length - 1],
         [0, editor.getText().length],
       ]);
       await editor.languageMode.atTransactionEnd();
-      expectLinkScopes(editor, ["https://example.com/a"]);
+      await expectLinkScopes(editor, ["https://example.com/a"]);
       editor.setText("https://example.com/a(https://other.example/path)");
       await editor.languageMode.atTransactionEnd();
-      expectLinkScopes(editor, ["https://example.com/a", "https://other.example/path"]);
-      expect(editor.languageMode.rootLanguageLayer.tree.rootNode.hasError).toBe(false);
+      await expectLinkScopes(editor, ["https://example.com/a", "https://other.example/path"]);
+      expect((await inspect(editor)).hasError).toBe(false);
     });
 
     it("keeps root parser work linear for repeated incomplete URL groups", async () => {
-      for (const count of [512, 1024]) {
-        const editor = await openText("");
-        const languageMode = editor.languageMode;
-        const acquire = languageMode.acquireParserForLanguage;
-        const parsers = new Set();
-        let consumed = 0;
-        let processed = 0;
-        let reduced = 0;
-        spyOn(languageMode, "acquireParserForLanguage").and.callFake(function (...args) {
-          const parser = acquire.apply(this, args);
-          parsers.add(parser);
-          parser.setLogger((message) => {
-            if (message.startsWith("consume")) consumed++;
-            if (message.startsWith("process")) processed++;
-            if (message.startsWith("reduce")) reduced++;
+      // This parser-operation diagnostic attaches a logger to the common
+      // parsing engine. The URL/runtime cases exercise the selected backend.
+      const previous = lumine.grammars.syntaxExecution;
+      lumine.grammars.syntaxExecution = "inline";
+      try {
+        for (const count of [512, 1024]) {
+          const editor = await openText("");
+          const languageMode = editor.languageMode;
+          const acquire = languageMode.acquireParserForLanguage;
+          const parsers = new Set();
+          let consumed = 0;
+          let processed = 0;
+          let reduced = 0;
+          spyOn(languageMode, "acquireParserForLanguage").and.callFake(function (...args) {
+            const parser = acquire.apply(this, args);
+            parsers.add(parser);
+            parser.setLogger((message) => {
+              if (message.startsWith("consume")) consumed++;
+              if (message.startsWith("process")) processed++;
+              if (message.startsWith("reduce")) reduced++;
+            });
+            return parser;
           });
-          return parser;
-        });
-        try {
-          const source = "https://x(".repeat(count);
-          editor.setText(source);
-          await languageMode.atTransactionEnd();
-          expect(links(editor).length).toBe(count);
-          expect(languageMode.rootLanguageLayer.tree.rootNode.hasError).toBe(false);
-          expect(consumed).toBeGreaterThan(0);
-          expect(consumed).toBeLessThan(source.length * 8);
-          expect(processed).toBeLessThan(source.length * 5);
-          expect(reduced).toBeLessThan(source.length * 5);
-          expectLinkScopes(editor, Array(count).fill("https://x"));
-        } finally {
-          for (const parser of parsers) parser.setLogger(null);
+          try {
+            const source = "https://x(".repeat(count);
+            editor.setText(source);
+            await languageMode.atTransactionEnd();
+            expect((await links(editor)).length).toBe(count);
+            expect((await inspect(editor)).hasError).toBe(false);
+            expect(consumed).toBeGreaterThan(0);
+            expect(consumed).toBeLessThan(source.length * 8);
+            expect(processed).toBeLessThan(source.length * 5);
+            expect(reduced).toBeLessThan(source.length * 5);
+            await expectLinkScopes(editor, Array(count).fill("https://x"));
+          } finally {
+            for (const parser of parsers) parser.setLogger(null);
+          }
         }
+      } finally {
+        lumine.grammars.syntaxExecution = previous;
       }
     });
 

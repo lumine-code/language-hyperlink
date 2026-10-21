@@ -4,7 +4,7 @@ Lets a language grammar highlight URLs inside its own strings and comments, by i
 
 |             |                                                              |
 | ----------- | ------------------------------------------------------------ |
-| Version     | `1.0.0`                                                      |
+| Version     | `2.0.0`                                                      |
 | Provided by | `provideHyperlinkInjection()` returning the injection helper |
 | Consumed by | `consumeHyperlinkInjection(hyperlink)`                       |
 | Owner       | `language-hyperlink` (bundled)                               |
@@ -30,7 +30,7 @@ For the JavaScript service, declare this in your `package.json`:
 {
   "consumedServices": {
     "hyperlink.injection": {
-      "versions": { "^1.0.0": "consumeHyperlinkInjection" }
+      "versions": { "^2.0.0": "consumeHyperlinkInjection" }
     }
   }
 }
@@ -46,14 +46,15 @@ type HyperlinkInjection = {
     scopeName: string,
     options: {
       types: string | string[];
-      language?(node: Node): string | null | undefined;
-      content?(node: Node): Node | Node[];
+      language?: string | null;
+      contentField?: string;
       languageScope?: string | null;
       includeChildren?: boolean;
     },
   ): Disposable;
 
-  test(node: Node): boolean;
+  testText(text: string): boolean;
+  modulePath: string;
 };
 ```
 
@@ -61,11 +62,10 @@ type HyperlinkInjection = {
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `addInjectionPoint(scopeName, options)` | Registers an injection point on a grammar and returns its cleanup. `scopeName` is the parent language's scope, e.g. `source.python`. |
 | `options.types`                         | Required. One node type or an array of them — the nodes that may contain a URL.                                                      |
-| `options.language(node)`                | Optional. Return a language name to force one, `null` to suppress the injection, or `undefined` to fall through to the default test. |
-| `options.content(node)`                 | Optional. Narrows the injection to some of the node's children. Defaults to the node itself.                                         |
 | `options.languageScope`                 | Optional. Sets scopes on the injected ranges; defaults to `null`, so only hyperlink captures are added.                              |
 | `options.includeChildren`               | Optional. Includes descendants in the injected ranges. Defaults to `false`.                                                          |
-| `test(node)`                            | The default check — whether the node's text contains a URL. Exposed for a custom `language` callback.                                |
+
+The service registers a syntax module in each parser owner. Options must be serializable: `language` forces a constant language name or suppresses the injection with `null`, and `contentField` selects a named child field. For custom callbacks, register your own module with `lumine.grammars.registerSyntaxModule`, pass `modulePath` as a factory argument, and call `require(modulePath).test(node)` inside that module. Syntax nodes stay with their parser. `testText(text)` exposes the same eligibility check for ordinary strings.
 
 ## Minimal example
 
@@ -88,8 +88,6 @@ exports.consumeHyperlinkInjection = (hyperlink) => {
 
 Call `addInjectionPoint` once per scope name your package ships. A grammar with dialects registers each scope separately — the scope table is keyed by exact name, not by prefix, so `source.python` does not cover `source.python.ipy`.
 
-By default the hyperlink grammar is injected only into nodes whose text contains an HTTP or HTTPS prefix, which is what keeps this cheap on large files. Static rules and the service's default test use the same `injectionContentRegex` from the target grammar descriptor. Supplying your own `language` callback replaces that test for the cases it answers; call `test(node)` inside it to keep the default behavior for the rest. The target prefilter is applied only to static rules, so a JavaScript callback can still deliberately override the default test.
-
 Pick the narrowest node types that can hold a URL. `comment` and `string_content` are the usual pair; injecting into a whole `string` node re-scans the quotes for nothing.
 
 Registration happens when the service edge is connected and is owned by that edge — see Teardown.
@@ -100,4 +98,4 @@ Registration happens when the service edge is connected and is owned by that edg
 
 ## Versioning
 
-`1.0.0` provided, `^1.0.0` consumed. A change that breaks this shape gets a new service name rather than a new major version, and both sides move in the same release.
+`2.0.0` provided, `^2.0.0` consumed. Version 2 replaces renderer-owned node callbacks with serializable options and parser-owned syntax modules. Consumers must use `^2.0.0`; custom node callbacks belong in their syntax module.

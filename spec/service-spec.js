@@ -24,7 +24,7 @@ describe("hyperlink injection service", () => {
     expect(registrations[1].dispose).toHaveBeenCalled();
   });
 
-  it("preserves URL eligibility and explicit JavaScript overrides", () => {
+  it("preserves URL eligibility and declarative overrides", () => {
     const points = [];
     spyOn(lumine.grammars, "addInjectionPoint").and.callFake((_scope, point) => {
       points.push(point);
@@ -35,18 +35,18 @@ describe("hyperlink injection service", () => {
       .mainModule.provideHyperlinkInjection();
     const ordinary = { text: "an ordinary comment" };
     for (const text of ["http://example.com", "https://example.com"]) {
-      expect(service.test({ text })).toBe(true);
-      expect(service.test({ text })).toBe(true);
+      expect(service.testText(text)).toBe(true);
+      expect(service.testText(text)).toBe(true);
     }
     for (const text of [ordinary.text, "nothttps://example.com", "ftp://example.com"])
-      expect(service.test({ text })).toBe(false);
+      expect(service.testText(text)).toBe(false);
 
     service.addInjectionPoint("source.test", { types: "comment" });
     service.addInjectionPoint("source.test", {
       types: "comment",
-      language: () => "hyperlink",
+      language: "hyperlink",
     });
-    service.addInjectionPoint("source.test", { types: "comment", language: () => null });
+    service.addInjectionPoint("source.test", { types: "comment", language: null });
     expect(points[0].language(ordinary)).toBeUndefined();
     expect(points[1].language(ordinary)).toBe("hyperlink");
     expect(points[2].language({ text: "https://example.com" })).toBeNull();

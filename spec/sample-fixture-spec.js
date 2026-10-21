@@ -22,12 +22,11 @@ describe("Hyperlink sample fixture", () => {
     const position = editor.getBuffer().positionForCharacterIndex(index);
 
     expect(editor.getGrammar().scopeName).toBe("source.gfm");
-    const rootNode = editor.getSyntaxNodeAtBufferPosition(
-      position,
-      (node, grammar) => grammar.scopeName === "source.gfm" && node.parent === null,
-    );
-    expect(rootNode).not.toBeNull();
-    expect(rootNode.hasError).toBe(false);
+    const root = await editor.analyzeSyntax(require.resolve("./helpers/syntax-tree"), "inspect");
+    expect(root.hasError).toBe(false);
+    languageMode.requestHighlighting(editor, [[position.row, position.row]]);
+    await languageMode.refresh?.();
+    await languageMode.presentation?.flush();
     await conditionPromise(() =>
       editor
         .scopeDescriptorForBufferPosition(position)
