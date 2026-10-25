@@ -201,6 +201,39 @@ describe("Hyperlink Tree-sitter grammar", () => {
     });
   });
 
+  describe("TeX braces", () => {
+    it("stops before the label of a TeX hyperlink", async () => {
+      const url =
+        "https://dot.ca.gov/-/media/dot-media/programs/engineering/documents/structureconstruction/201906-sc-trenchingshoring-a11y.pdf";
+      const editor = await openText(
+        `\\href{${url}}{Caltrans, Trenching and Shoring Manual, rozdział 8}`,
+      );
+      await expectLinkScopes(editor, [url]);
+      expect((await inspect(editor)).hasError).toBe(false);
+    });
+
+    it("stops at raw braces within paths and queries", async () => {
+      for (const text of [
+        "https://example.com/path{label}tail",
+        "https://example.com/path}label{tail",
+        "https://example.com/path?q={value}&next=1",
+        "https://example.com/path?q=value}label{tail",
+      ]) {
+        const editor = await openText(text);
+        const expected = text.slice(0, text.search(/[{}]/));
+        await expectLinkScopes(editor, [expected]);
+        expect((await inspect(editor)).hasError).toBe(false);
+      }
+    });
+
+    it("keeps percent-encoded braces within paths and queries", async () => {
+      const url = "https://example.com/%7Bname%7D?q=%7bvalue%7d&next=1";
+      const editor = await openText(`\\href{${url}}{Label}`);
+      await expectLinkScopes(editor, [url]);
+      expect((await inspect(editor)).hasError).toBe(false);
+    });
+  });
+
   describe("URLs that keep their punctuation", () => {
     it("keeps characters that only look like delimiters mid-URL", async () => {
       expect(await linkIn("https://example.com/a_b/c-d")).toBe("https://example.com/a_b/c-d");
