@@ -1,6 +1,6 @@
 # Hyperlink samples
 
-A bare URL: https://example.com/docs?view=compact&lang=en
+A URL in inline code: `https://example.com/docs?view=compact&lang=en`
 
 A URL with paired parentheses: https://en.wikipedia.org/wiki/Text_editor_(program)
 

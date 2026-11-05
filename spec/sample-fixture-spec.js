@@ -10,13 +10,15 @@ describe("Hyperlink sample fixture", () => {
     await lumine.packages.activatePackage("language-gfm");
   });
 
-  it("highlights links injected into sample.md", async () => {
+  it("highlights an inline-code URL through the Markdown hyperlink injection", async () => {
     const editor = await lumine.workspace.open(path.join(__dirname, "fixtures", "sample.md"));
     const languageMode = editor.getBuffer().getLanguageMode();
     await languageMode.ready;
     await languageMode.atTransactionEnd();
 
-    const needle = "https://example.com/docs";
+    // GFM owns bare prose URLs natively. Its injection deliberately includes
+    // code spans, where this package must still own the URL's complete scope.
+    const needle = "https://example.com/docs?view=compact&lang=en";
     const index = editor.getText().indexOf(needle);
     expect(index).not.toBe(-1);
     const position = editor.getBuffer().positionForCharacterIndex(index);
@@ -33,5 +35,14 @@ describe("Hyperlink sample fixture", () => {
         .getScopesArray()
         .includes("markup.underline.link.hyperlink"),
     );
+    const scopes = editor.scopeDescriptorForBufferPosition(position).getScopesArray();
+    expect(scopes).toContain("markup.raw.inline.gfm");
+    expect(scopes).not.toContain("markup.underline.link.gfm");
+    const range = await editor.bufferRangeForScopeAtPosition(
+      ".markup.underline.link.hyperlink",
+      position,
+    );
+    const end = editor.getBuffer().positionForCharacterIndex(index + needle.length);
+    expect(range.serialize()).toEqual([position.toArray(), end.toArray()]);
   });
 });
