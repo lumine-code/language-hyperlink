@@ -70,6 +70,9 @@ Source: https://github.com/lumine-code/tree-sitter-hyperlink
 Commit: 2bcc2d5cfe8d8ae8dd5d9aad17ba439def3dec3d
 Ref: 2bcc2d5cfe8d8ae8dd5d9aad17ba439def3dec3d
 
+Parser source: github:lumine-code/tree-sitter-hyperlink#2bcc2d5cfe8d8ae8dd5d9aad17ba439def3dec3d
+Resolved commit: 2bcc2d5cfe8d8ae8dd5d9aad17ba439def3dec3d
+
 Original file: LICENSE
 
 MIT License
